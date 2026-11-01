@@ -1,0 +1,177 @@
+openapi: 3.0.3
+info:
+  title: StealthInterview API
+  description: |
+    REST API for StealthInterview - the world's most advanced open-source
+    real-time AI interview copilot. Generate answers, transcribe audio,
+    parse resumes, and run mock interviews.
+  version: 0.1.0
+  license:
+    name: GPLv3
+    url: https://www.gnu.org/licenses/gpl-3.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+paths:
+  /health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  version:
+                    type: string
+                  ollama_available:
+                    type: boolean
+  /generate:
+    post:
+      summary: Generate an interview answer
+      tags: [Generation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              properties:
+                question:
+                  type: string
+                  example: Tell me about yourself
+                format:
+                  type: string
+                  enum: [behavioral, coding, system_design]
+                  default: behavioral
+                answer_length:
+                  type: string
+                  enum: [short, medium, long]
+                  default: medium
+                technical_detail:
+                  type: string
+                  enum: [low, medium, high]
+                  default: high
+                resume_context:
+                  type: string
+                  example: Skills: Python, React. Experience: 3 years.
+      responses:
+        '200':
+          description: Generated answer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  question:
+                    type: string
+                  answer:
+                    type: string
+                  format:
+                    type: string
+                  tokens_used:
+                    type: integer
+                  duration_ms:
+                    type: number
+        '503':
+          description: Service unavailable
+  /transcribe:
+    post:
+      summary: Transcribe audio to text
+      tags: [Transcription]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [audio_base64]
+              properties:
+                audio_base64:
+                  type: string
+                  description: Base64-encoded audio data
+                language:
+                  type: string
+                  default: en
+      responses:
+        '200':
+          description: Transcription result
+  /resume/parse:
+    post:
+      summary: Parse a resume file
+      tags: [Resume]
+      parameters:
+        - in: query
+          name: file_path
+          required: true
+          schema:
+            type: string
+          description: Path to resume file (PDF, DOCX, TXT)
+      responses:
+        '200':
+          description: Parsed resume data
+  /mock/start:
+    post:
+      summary: Start a mock interview session
+      tags: [Mock Interview]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                format:
+                  type: string
+                  enum: [behavioral, coding, system_design]
+                  default: behavioral
+                difficulty:
+                  type: string
+                  enum: [easy, medium, hard]
+                  default: medium
+                num_questions:
+                  type: integer
+                  default: 5
+      responses:
+        '200':
+          description: Mock session started
+  /config:
+    get:
+      summary: Get API configuration
+      tags: [System]
+      responses:
+        '200':
+          description: Current configuration
+components:
+  schemas:
+    GenerateRequest:
+      type: object
+      properties:
+        question:
+          type: string
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        version:
+          type: string
+        ollama_available:
+          type: boolean
+tags:
+  - name: System
+    description: System health and configuration
+  - name: Generation
+    description: AI answer generation
+  - name: Transcription
+    description: Speech-to-text transcription
+  - name: Resume
+    description: Resume parsing
+  - name: Mock Interview
+    description: Mock interview simulator
